@@ -38,11 +38,11 @@ package org.purl.sword.server.fedora.fileHandlers;
   *
   * @author Glen Robson
   * @version 1.0
-  * Date: 18 October 2007 
+  * Date: 18 October 2007
   *
-  * This class reads in the file handlers from the config file and decides which 
+  * This class reads in the file handlers from the config file and decides which
   * one can handle the request. The first one it comes across that says it can
-  * handle the requested is returned. If none are matched a DefaultFileHandler is 
+  * handle the requested is returned. If none are matched a DefaultFileHandler is
   * used.
   */
 import org.purl.sword.server.fedora.utils.XMLProperties;
@@ -91,16 +91,16 @@ public class FileHandlerFactory {
 		String tClassName = "";
 		while (tHandlerClassIter.hasNext()) {
 			tClassName = tHandlerClassIter.next();
-			
+
 			LOG.debug("Loading " + tClassName + " as a file handler");
-			
+
 			try {
 				tHandlers.add((FileHandler)Class.forName(tClassName).newInstance());
 			} catch (ClassNotFoundException tClassExcpt) {
 				String tMessage = "Couldn't find class " + tClassName + " in CLASSPATH";
 				LOG.error(tMessage);
 				throw new SWORDException(tMessage, tClassExcpt);
-			} catch (InstantiationException tInstExcpt) {	
+			} catch (InstantiationException tInstExcpt) {
 				String tMessage = "Couldn't instanciate " + tClassName + " ensure it has a default constructor and implements FileHandler interface";
 				LOG.error(tMessage);
 				throw new SWORDException(tMessage, tInstExcpt);

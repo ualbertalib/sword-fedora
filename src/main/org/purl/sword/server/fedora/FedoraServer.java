@@ -38,7 +38,7 @@ package org.purl.sword.server.fedora;
   *
   * @author Glen Robson
   * @version 1.0
-  * Date: 18 October 2007 
+  * Date: 18 October 2007
   *
   */
 
@@ -108,7 +108,7 @@ public class FedoraServer implements SWORDServer {
 	public FedoraServer() {
 
 		_props = new XMLProperties();
-	
+
 		try {
 			LOG.debug("Connecting to " + _props.getFedoraURL() + "/services/access");
 			FedoraAPIMService tService = new FedoraAPIMServiceLocator();
@@ -128,9 +128,9 @@ public class FedoraServer implements SWORDServer {
 	}
 
 	/**
-	 * This is the method which retrieves the Service document. If you want to replace this method of retrieving the 
+	 * This is the method which retrieves the Service document. If you want to replace this method of retrieving the
 	 * service document override this method and change the server-class in web.xml to point to your extension
-	 * 
+	 *
     * @param String the user that is requesting the ServiceDocument
 	 * @return ServiceDocument the service document
 	 * @throws SWORDException if there was a problem reading the config file
@@ -145,11 +145,11 @@ public class FedoraServer implements SWORDServer {
 
 	/**
 	 * Answer a Service Document request sent on behalf of a user
-	 * 
+	 *
 	 * @param sdr The Service Document Request object
-	 * 
+	 *
 	 * @exception SWORDAuthenticationException Thrown if the authentication fails
-	 * @exception SWORDException Thrown in an un-handalable Exception occurs. 
+	 * @exception SWORDException Thrown in an un-handalable Exception occurs.
 	 *            This will be dealt with by sending a HTTP 500 Server Exception
 	 *
 	 * @return The ServiceDocument representing the service document
@@ -159,7 +159,7 @@ public class FedoraServer implements SWORDServer {
 		if (pServiceRequest.getUsername() != null) {
 			this.authenticates(pServiceRequest.getUsername(), pServiceRequest.getPassword());
 		}
-			
+
 		String tOnBehalfOf = pServiceRequest.getOnBehalfOf();
 		if (tOnBehalfOf == null) { // On Behalf off not supplied so send the username instead
 		 	tOnBehalfOf = pServiceRequest.getUsername();
@@ -167,23 +167,23 @@ public class FedoraServer implements SWORDServer {
 
 		String[] tURIList = pServiceRequest.getLocation().split("/");
 		String tLocation = tURIList[tURIList.length -1];
-		
+
 		if (tLocation.equals("servicedocument")) {
 			return this.getServiceDocument(tOnBehalfOf);
 		} else { // sub service document
 			return this.getServiceDocument(tOnBehalfOf, tLocation);
-		}	
+		}
 	}
-	
+
 	/**
 	 * Answer a SWORD deposit
-	 * 
+	 *
 	 * @param deposit The Deposit object
-	 * 
+	 *
 	 * @exception SWORDAuthenticationException Thrown if the authentication fails
-	 * @exception SWORDException Thrown in an un-handalable Exception occurs. 
+	 * @exception SWORDException Thrown in an un-handalable Exception occurs.
 	 *            This will be dealt with by sending a HTTP 500 Server Exception
-	 * 
+	 *
 	 * @return The response to the deposit
 	 */
 	public DepositResponse doDeposit(Deposit pDeposit) throws SWORDAuthenticationException, SWORDException, SWORDErrorException {
@@ -199,10 +199,10 @@ public class FedoraServer implements SWORDServer {
 			String tLocation = pDeposit.getLocation();
 			if (tLocation.endsWith("/")) {
 				tLocation = tLocation.substring(0, tLocation.length() - 1);
-			}	
+			}
 			String[] tWords = tLocation.split("/");
 			final String tCollectionPID = tWords[tWords.length - 1];
-			
+
 			// If no on behalf of set then the deposit is owned by the username
 			String tOnBehalfOf = pDeposit.getOnBehalfOf();
 			if (pDeposit.getOnBehalfOf() == null) {
@@ -219,22 +219,27 @@ public class FedoraServer implements SWORDServer {
 
 			// Check to see if content type is in the allowed list
 			if (!tServiceDoc.isContentTypeAllowed(pDeposit.getContentType(), tCollectionPID)) {
-				String tDesc = "Type " + pDeposit.getContentType() + " is not accepted in collection " + tCollectionPID; 
+				String tDesc = "Type " + pDeposit.getContentType() + " is not accepted in collection " + tCollectionPID;
 				LOG.debug(tDesc);
-				throw new SWORDErrorException(ErrorCodes.ERROR_CONTENT, tDesc); 
+				throw new SWORDErrorException(ErrorCodes.ERROR_CONTENT, tDesc);
 			}
 
 			// Check to see if package type is in the allowed list
 			if (!tServiceDoc.isPackageTypeAllowed(pDeposit.getPackaging(), tCollectionPID)) {
-				String tDesc = "Packaging Type " + pDeposit.getPackaging() + " is not accepted in collection " + tCollectionPID; 
+				String tDesc = "Packaging Type " + pDeposit.getPackaging() + " is not accepted in collection " + tCollectionPID;
 				LOG.debug(tDesc);
-				throw new SWORDErrorException(ErrorCodes.ERROR_CONTENT, tDesc); 
+				throw new SWORDErrorException(ErrorCodes.ERROR_CONTENT, tDesc);
 			}
 
 			// Call the file handlers and see which one responds that it can handle the deposit
+			if (pDeposit.getPackaging().equalsIgnoreCase("http://purl.org/net/sword-types/METSDSpaceSIP"))
+			{
+				pDeposit.setPackaging("http://www.loc.gov/METS/");
+			}
+
 			FileHandler tHandler = FileHandlerFactory.getFileHandler(pDeposit.getContentType(), pDeposit.getPackaging());
 			SWORDEntry tEntry = tHandler.ingestDepost(new DepositCollection(pDeposit, tCollectionPID), (ServiceDocument)tServiceDoc);
-		
+
 			// send response
 			DepositResponse tResponse = new DepositResponse(Deposit.CREATED);
 			tResponse.setEntry(tEntry);
@@ -257,7 +262,7 @@ public class FedoraServer implements SWORDServer {
          tSerializer.setIndent(3);
 
 			Document tDoc = new Document(tEntry.marshall());
-			tSerializer.write(tDoc);  
+			tSerializer.write(tDoc);
 
 			return tResponse;
 		} catch (IOException tIOExcpt) {
@@ -272,7 +277,7 @@ public class FedoraServer implements SWORDServer {
 			tArgException.printStackTrace();
 			LOG.error("Exception occured: " + tArgException);
 			throw tArgException;
-		} catch (RuntimeException tRuntimeExcpt) {	
+		} catch (RuntimeException tRuntimeExcpt) {
 			tRuntimeExcpt.printStackTrace();
 			LOG.error("Exception occured: " + tRuntimeExcpt);
 			throw tRuntimeExcpt;
@@ -281,15 +286,15 @@ public class FedoraServer implements SWORDServer {
 
 	/**
 	 * Answer a request for an entry document
-	 * 
+	 *
 	 * @param adr The Atom Document Request object
-	 * 
+	 *
 	 * @exception SWORDAuthenticationException Thrown if the authentication fails
 	 * @exception SWORDErrorException Thrown if there was an error with the input not matching
 	 *            the capabilities of the server
-	 * @exception SWORDException Thrown if an un-handalable Exception occurs. 
+	 * @exception SWORDException Thrown if an un-handalable Exception occurs.
 	 *            This will be dealt with by sending a HTTP 500 Server Exception
-	 * 
+	 *
 	 * @return The response to the atom document request
 	 */
 	public AtomDocumentResponse doAtomDocument(AtomDocumentRequest pAtomDocumentRequest) throws SWORDAuthenticationException, SWORDErrorException, SWORDException {
@@ -323,7 +328,7 @@ public class FedoraServer implements SWORDServer {
 					LOG.error("Couldn't find " + pAtomDocumentRequest.getLocation());
 					throw new SWORDException("Couldn't find " + pAtomDocumentRequest.getLocation());
 				}
-			}	
+			}
 
 			return tResponse;
 		} catch (IOException tIOExcpt) {
@@ -340,13 +345,13 @@ public class FedoraServer implements SWORDServer {
 			throw new SWORDException(tParseExcpt.getMessage());
 		}
 	}
-	
+
 	/**
 	 * Authenticate a user
-	 * 
+	 *
 	 * @param usenrame The username to authenticate
 	 * @param password The password to autheenticate with
-	 * 
+	 *
 	 * @return Whether or not the user credentials authenticate
 	 */
 	public void authenticates(final String pUsername, final String pPassword) throws SWORDAuthenticationException, SWORDException {
@@ -366,7 +371,7 @@ public class FedoraServer implements SWORDServer {
 			Element[] tFaults = tFault.getFaultDetails();
 			for (int i = 0; i < tFaults.length; i++) {
 				if (tFaults[i].getTagName().equals("HttpErrorCode") && tFaults[i].getFirstChild().getTextContent().equals("401")) {
-					//tAuthorised  = false;	
+					//tAuthorised  = false;
 					throw new SWORDAuthenticationException("Failed to authenticate", null);
 				}
 			}
