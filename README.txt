@@ -1,3 +1,8 @@
+Forked from http://sourceforge.net/projects/sword-app/files/SWORD%20Fedora%20implementation/
+
+The master branch will track any changes made to the source at SourceForge; the era branch will contain local modification.
+
+----
 
 CONTENTS
 
